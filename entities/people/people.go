@@ -9,9 +9,12 @@ type Person struct {
 
 // Contact represents a person's contact information.
 type Contact struct {
-	Email       string `json:"email"`
-	Phone       string `json:"phone"`
-	LinkedinURL string `json:"linkedin_url"`
+	Email        string `json:"email"`
+	Phone        string `json:"phone"`
+	LinkedinURL  string `json:"linkedin_url"`
+	XURL         string `json:"x_url"`
+	InstagramURL string `json:"instagram_url"`
+	FacebookURL  string `json:"facebook_url"`
 }
 
 // Repository provides access to a Person store.
