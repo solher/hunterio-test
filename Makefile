@@ -1,14 +1,19 @@
 NAME=hunterio-test
-.DEFAULT_GOAL = run
+.DEFAULT_GOAL = run-api
 
-.PHONY: install
-install: ## Installs the Go binary for development
+.PHONY: install-api
+install-api: ## Installs the Go binary for development
 	@go version
-	GOGC=off go install -v
+	GOGC=off go build -o $(GOPATH)/bin/$(NAME)-api -v ./cmd/api
 
-.PHONY: run
-run: install ## Runs the Go program for development
-	source develop.env && $(NAME)
+.PHONY: run-api
+run-api: install-api ## Runs the Go program for development
+	source develop.env && $(NAME)-api
+
+.PHONY: install-cli
+install-cli: ## Installs the Go binary for development
+	@go version
+	GOGC=off go build -o $(GOPATH)/bin/$(NAME)-cli -v ./cmd/cli
 
 .PHONY: tidy
 tidy: ## Tidies the project

@@ -34,7 +34,7 @@ func run(args []string, stdout io.Writer) error {
 	fs := flag.NewFlagSet("hunterio-test", flag.ExitOnError)
 	environment := fs.String("environment", "develop", "The deploy environment")
 	httpAddr := fs.String("http-addr", ":8080", "HTTP listen address")
-	postgresHost := fs.String("postgres-host", "127.0.0.1", "The Postgres database host")
+	postgresHost := fs.String("postgres-host", "localhost", "The Postgres database host")
 	postgresPort := fs.String("postgres-port", "5432", "The Postgres database port")
 	postgresDatabase := fs.String("postgres-database", "hunterio", "The Postgres database name")
 	postgresUser := fs.String("postgres-user", "hunterio", "The Postgres user")
