@@ -13,3 +13,7 @@ run: install ## Runs the Go program for development
 .PHONY: tidy
 tidy: ## Tidies the project
 	go mod tidy && go mod vendor
+
+.PHONY: db
+db: ## Launches and migrates a development database
+	source develop.env && NAME=$(NAME) make -C postgres db

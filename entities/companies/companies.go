@@ -2,6 +2,7 @@ package companies
 
 // Company represents a company.
 type Company struct {
+	ID          uint64   `json:"id"`
 	Name        string   `json:"name"`
 	FoundedYear int      `json:"founded_year"`
 	Industry    string   `json:"industry"`
@@ -9,8 +10,4 @@ type Company struct {
 	Employees   int      `json:"employees"`
 	Locations   []string `json:"locations"`
 	TechStack   []string `json:"tech_stack"`
-}
-
-// Repository provides access to a Company store.
-type Repository interface {
 }

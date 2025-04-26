@@ -16,7 +16,3 @@ type Contact struct {
 	InstagramURL string `json:"instagram_url"`
 	FacebookURL  string `json:"facebook_url"`
 }
-
-// Repository provides access to a Person store.
-type Repository interface {
-}

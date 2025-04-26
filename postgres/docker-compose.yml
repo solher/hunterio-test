@@ -1,0 +1,21 @@
+services:
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile-postgres
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DATABASE: ${POSTGRES_DATABASE}
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile-migrate
+    command: -path=/migrations -database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${POSTGRES_PORT}/${POSTGRES_DATABASE}?sslmode=disable" up
+    network_mode: "host"
+    depends_on:
+      - db
