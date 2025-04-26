@@ -6,6 +6,10 @@ First, create a `develop.env` file at the root of the project with the following
 
 ```bash
 export POSTGRES_PORT=6432
+export POSTGRES_HOST=localhost
+export POSTGRES_USER=hunterio
+export POSTGRES_PASSWORD=hunterio
+export POSTGRES_DATABASE=hunterio
 export OPENAI_SECRET_KEY=<OPENAI_SECRET>
 ```
 
@@ -24,6 +28,17 @@ That's it. No need to install the dependencies, everything is vendored.
 make run-api
 ```
 
+The API also supports a `/history` endpoint to get the extraction history for a given URL:
+
+```bash
+curl -X "POST" "http://localhost:8080/extract/history" \
+     -d $'{
+  "url": "https://hunter.io/about",
+  "created_at_from": "2025-01-01T00:00:00Z",
+  "created_at_to": "2025-12-01T00:00:00Z"
+}'
+```
+
 ## Running the CLI
 
 First, install the CLI binary:
@@ -37,6 +52,8 @@ Then, run the CLI with the following command:
 ```bash
 hunterio-test-cli --postgres-port=6432 --openai-secret-key=<OPENAI_SECRET> https://hunter.io/about
 ```
+
+The CLI only supports extraction of a single URL at a time.
 
 ## Decisions
 
@@ -61,6 +78,10 @@ The `extractDataFromString` function is ready to be tested but since it's a func
 ### Polish The Extraction
 
 The current extraction is very basic and I did little prompt engineering. It would need more battle testing, possibly some post-processing to cleanup the data, why not some custom scraping logic for some websites or even some ld+json extraction.
+
+### Make it Faster
+
+The OpenAI API is the main bottleneck here. We could improve the performance by chunking the data and extracting it in parallel for example.
 
 ### Data Modelization
 

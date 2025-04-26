@@ -26,7 +26,11 @@ type postgresRepository struct {
 
 // Search allows object searching.
 type Search struct {
-	URL string `db:"url"`
+	URL           string    `db:"url"`
+	Limit         int       `db:"limit"`
+	Offset        int       `db:"offset"`
+	CreatedAtFrom time.Time `db:"created_at_from"`
+	CreatedAtTo   time.Time `db:"created_at_to"`
 }
 
 func (r *postgresRepository) Insert(ctx context.Context, extractedData *ExtractedData) (*ExtractedData, error) {
@@ -38,7 +42,6 @@ func (r *postgresRepository) Insert(ctx context.Context, extractedData *Extracte
 	extractedData = &cpy
 
 	extractedData.CreatedAt = time.Now().UTC()
-	extractedData.UpdatedAt = extractedData.CreatedAt
 
 	if err := r.db.QueryRow(ctx, files.File("insert.tmpl.sql"), pgutil.ToNamedArgs(extractedData)).Scan(&extractedData.ID); err != nil {
 		return nil, err
@@ -56,12 +59,12 @@ func (r *postgresRepository) Find(ctx context.Context, search Search) (extracted
 	return pgx.CollectRows(rows, pgx.RowToStructByName[ExtractedData])
 }
 
-func (r *postgresRepository) GetByURL(ctx context.Context, url string) (*ExtractedData, error) {
+func (r *postgresRepository) GetLastByURL(ctx context.Context, url string) (*ExtractedData, error) {
 	if url == "" {
 		return nil, errors.New("url cannot be empty")
 	}
 
-	extractedDataList, err := r.Find(ctx, Search{URL: url})
+	extractedDataList, err := r.Find(ctx, Search{URL: url, Limit: 1})
 	if err != nil {
 		return nil, err
 	}
@@ -69,20 +72,4 @@ func (r *postgresRepository) GetByURL(ctx context.Context, url string) (*Extract
 		return nil, ErrNotFound
 	}
 	return &extractedDataList[0], nil
-}
-
-func (r *postgresRepository) UpdateByID(ctx context.Context, id uint64, extractedData *ExtractedData) error {
-	if id == 0 {
-		return errors.New("id cannot be empty")
-	}
-	if extractedData.URL == "" {
-		return errors.New("url cannot be empty")
-	}
-
-	cpy := *extractedData
-	extractedData = &cpy
-	extractedData.ID = id
-
-	_, err := r.db.Exec(ctx, files.File("update_by_id.tmpl.sql"), pgutil.ToNamedArgs(extractedData))
-	return err
 }

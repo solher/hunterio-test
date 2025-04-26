@@ -21,6 +21,7 @@ import (
 // Service represents the data extraction service interface.
 type Service interface {
 	ExtractAndPersistFromURL(ctx context.Context, url string) (*extracteddata.ExtractedData, error)
+	GetExtractedDataHistory(ctx context.Context, url string, from time.Time, to time.Time, limit int, offset int) ([]extracteddata.ExtractedData, error)
 }
 
 // NewService returns a new instance of the data extraction service.
@@ -56,13 +57,13 @@ var (
 // ExtractAndPersistFromURL fetches a page from a URL, extracts data from it, and persists it to the database.
 func (s *service) ExtractAndPersistFromURL(ctx context.Context, url string) (*extracteddata.ExtractedData, error) {
 	// First, we check if the data is already in the database for this URL.
-	extractedData, err := s.extractedDataRepo.GetByURL(ctx, url)
+	extractedData, err := s.extractedDataRepo.GetLastByURL(ctx, url)
 	if err != nil && err != extracteddata.ErrNotFound {
 		return nil, err
 	}
 
 	// If the data is fresh, we return it. Otherwise, we refetch.
-	if extractedData != nil && extractedData.UpdatedAt.After(time.Now().Add(-cacheFreshness)) {
+	if extractedData != nil && extractedData.CreatedAt.After(time.Now().Add(-cacheFreshness)) {
 		return extractedData, nil
 	}
 
@@ -181,29 +182,38 @@ Webpage:
 
 // persistExtractedData persists the extracted data to the database.
 func (s *service) persistExtractedData(ctx context.Context, url string, data *openAIExtractedData) (*extracteddata.ExtractedData, error) {
-	existingData, err := s.extractedDataRepo.GetByURL(ctx, url)
-	if err != nil && err != extracteddata.ErrNotFound {
+	newData, err := s.extractedDataRepo.Insert(ctx, &extracteddata.ExtractedData{
+		URL:       url,
+		Companies: data.Companies,
+		People:    data.People,
+	})
+	if err != nil {
 		return nil, err
 	}
+	return newData, nil
+}
 
-	// If the data is not in the database, we insert it.
-	if err == extracteddata.ErrNotFound {
-		newData, err := s.extractedDataRepo.Insert(ctx, &extracteddata.ExtractedData{
-			URL:       url,
-			Companies: data.Companies,
-			People:    data.People,
-		})
-		if err != nil {
-			return nil, err
-		}
-		return newData, nil
+// GetExtractedDataHistory returns the extracted data history for a given URL.
+func (s *service) GetExtractedDataHistory(ctx context.Context, url string, from time.Time, to time.Time, limit int, offset int) ([]extracteddata.ExtractedData, error) {
+	if from.IsZero() {
+		return nil, errors.New("from cannot be zero")
+	}
+	if to.IsZero() {
+		return nil, errors.New("to cannot be zero")
+	}
+	if limit == 0 || limit > 10 {
+		limit = 10
 	}
 
-	// If the data is already in the database, we update it.
-	existingData.People = data.People
-	existingData.Companies = data.Companies
-	if err := s.extractedDataRepo.UpdateByID(ctx, existingData.ID, existingData); err != nil {
+	extractedDataList, err := s.extractedDataRepo.Find(ctx, extracteddata.Search{
+		URL:           url,
+		CreatedAtFrom: from,
+		CreatedAtTo:   to,
+		Limit:         limit,
+		Offset:        offset,
+	})
+	if err != nil {
 		return nil, err
 	}
-	return existingData, nil
+	return extractedDataList, nil
 }
