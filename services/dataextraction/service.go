@@ -3,6 +3,7 @@ package dataextraction
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -45,6 +46,11 @@ type service struct {
 
 const (
 	cacheFreshness = 1 * time.Hour
+)
+
+var (
+	ErrServiceUnavailable = errors.New("service unavailable, try again later")
+	ErrPageNotFound       = errors.New("page not found")
 )
 
 // ExtractAndPersistFromURL fetches a page from a URL, extracts data from it, and persists it to the database.
@@ -91,14 +97,12 @@ func (s *service) fetchStringDataFromURL(ctx context.Context, url string) (strin
 	defer resp.Body.Close()
 
 	switch resp.StatusCode {
-	case http.StatusServiceUnavailable:
-		return "", fmt.Errorf("service unavailable, try again later")
-	case http.StatusNotFound:
-		return "", fmt.Errorf("page not found")
 	case http.StatusOK:
 		// All good, continue
+	case http.StatusNotFound:
+		return "", ErrPageNotFound
 	default:
-		return "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return "", ErrServiceUnavailable
 	}
 
 	body, err := io.ReadAll(resp.Body)

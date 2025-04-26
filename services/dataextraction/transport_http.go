@@ -30,7 +30,12 @@ func (h *httpHandler) ExtractAndPersistFromURL(w http.ResponseWriter, r *http.Re
 
 	result, err := h.service.ExtractAndPersistFromURL(ctx, r.URL.Query().Get("url"))
 	if err != nil {
-		h.json.RenderError(ctx, w, api.HTTPInternal, err)
+		switch err {
+		case ErrPageNotFound:
+			h.json.RenderError(ctx, w, api.HTTPNotFound, err)
+		default:
+			h.json.RenderError(ctx, w, api.HTTPInternal, err)
+		}
 		return
 	}
 
