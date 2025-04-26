@@ -27,7 +27,6 @@ func main() {
 
 func run(args []string, stdout io.Writer) error {
 	fs := flag.NewFlagSet("hunterio-test", flag.ExitOnError)
-	environment := fs.String("environment", "develop", "The deploy environment")
 	postgresHost := fs.String("postgres-host", "localhost", "The Postgres database host")
 	postgresPort := fs.String("postgres-port", "5432", "The Postgres database port")
 	postgresDatabase := fs.String("postgres-database", "hunterio", "The Postgres database name")
@@ -40,13 +39,7 @@ func run(args []string, stdout io.Writer) error {
 	ctx := context.Background()
 
 	// Loggers
-	var logger log.Logger
-	switch *environment {
-	case "stage", "prod":
-		logger = log.NewJSONLogger(log.NewSyncWriter(stdout))
-	default:
-		logger = log.NewLogfmtLogger(log.NewSyncWriter(stdout))
-	}
+	logger := log.NewLogfmtLogger(log.NewSyncWriter(stdout))
 	logger = log.With(logger, "ts", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
 
 	// Databases
